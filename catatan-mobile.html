@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CatatanKu</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a24;
+    --surface2: #22222f;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --text: #f0f0f8;
+    --muted: #8888aa;
+    --border: rgba(255,255,255,0.07);
+    --radius: 20px;
+    --shadow: 0 8px 32px rgba(108,99,255,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background blobs */
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::before {
+    width: 300px; height: 300px;
+    background: var(--accent);
+    top: -100px; right: -80px;
+  }
+  body::after {
+    width: 250px; height: 250px;
+    background: var(--accent2);
+    bottom: 100px; left: -80px;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 0 120px;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    padding: 48px 24px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .header-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+  .header-title span { color: var(--accent); }
+  .header-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .count-badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-family: 'Sora', sans-serif;
+  }
+  .btn-reset {
+    background: rgba(255,101,132,0.12);
+    color: var(--accent2);
+    border: 1.5px solid rgba(255,101,132,0.25);
+    border-radius: 30px;
+    padding: 6px 14px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-reset:active { transform: scale(0.95); background: rgba(255,101,132,0.22); }
+
+  /* Reset Confirm Dialog */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(10px);
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .confirm-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .confirm-box {
+    background: var(--surface);
+    border: 1px solid rgba(255,101,132,0.2);
+    border-radius: 24px;
+    padding: 32px 24px 24px;
+    width: 100%;
+    max-width: 340px;
+    text-align: center;
+    transform: scale(0.88) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+  }
+  .confirm-overlay.open .confirm-box {
+    transform: scale(1) translateY(0);
+  }
+  .confirm-icon {
+    font-size: 52px;
+    margin-bottom: 16px;
+    display: block;
+    animation: shake 0.5s ease 0.3s both;
+  }
+  @keyframes shake {
+    0%,100% { transform: rotate(0deg); }
+    25% { transform: rotate(-8deg); }
+    75% { transform: rotate(8deg); }
+  }
+  .confirm-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .confirm-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+  .confirm-desc strong { color: var(--accent2); }
+  .confirm-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .btn-confirm-reset {
+    width: 100%;
+    background: var(--accent2);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 15px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    box-shadow: 0 4px 16px rgba(255,101,132,0.3);
+  }
+  .btn-confirm-reset:active { transform: scale(0.98); background: #e05070; }
+  .btn-confirm-cancel {
+    width: 100%;
+    background: var(--surface2);
+    color: var(--muted);
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-confirm-cancel:active { background: #2a2a3a; }
+
+  /* Search */
+  .search-wrap {
+    padding: 0 24px 16px;
+  }
+  .search-box {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 16px;
+    gap: 10px;
+    transition: border-color 0.2s;
+  }
+  .search-box:focus-within {
+    border-color: var(--accent);
+  }
+  .search-icon { font-size: 16px; opacity: 0.5; }
+  .search-box input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    flex: 1;
+  }
+  .search-box input::placeholder { color: var(--muted); }
+
+  /* List */
+  .list {
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 0;
+    color: var(--muted);
+  }
+  .empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    animation: slideIn 0.3s ease;
+  }
+  .card:active { transform: scale(0.98); }
+  .card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+  }
+  .card:nth-child(3n+1)::before { background: var(--accent); }
+  .card:nth-child(3n+2)::before { background: var(--accent2); }
+  .card:nth-child(3n)::before { background: var(--accent3); }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .avatar {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px;
+    font-family: 'Sora', sans-serif;
+    flex-shrink: 0;
+  }
+  .card:nth-child(3n+1) .avatar { background: rgba(108,99,255,0.2); color: var(--accent); }
+  .card:nth-child(3n+2) .avatar { background: rgba(255,101,132,0.2); color: var(--accent2); }
+  .card:nth-child(3n) .avatar { background: rgba(67,233,123,0.2); color: var(--accent3); }
+
+  .card-actions { display: flex; gap: 6px; }
+  .btn-icon {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    transition: transform 0.15s, background 0.15s;
+    background: var(--surface2);
+    color: var(--muted);
+  }
+  .btn-icon:active { transform: scale(0.9); }
+  .btn-icon.delete:active { background: rgba(255,101,132,0.2); color: var(--accent2); }
+
+  .card-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .meta-item {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .meta-item span { color: var(--text); opacity: 0.8; }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: 32px;
+    right: 50%;
+    transform: translateX(50%);
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    padding: 16px 32px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(108,99,255,0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 10;
+    max-width: calc(480px - 48px);
+    width: calc(100% - 48px);
+    justify-content: center;
+  }
+  .fab:active {
+    transform: translateX(50%) scale(0.97);
+    box-shadow: 0 4px 12px rgba(108,99,255,0.3);
+  }
+
+  /* Modal */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 20;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .sheet {
+    background: var(--surface);
+    border-radius: 28px 28px 0 0;
+    width: 100%;
+    max-width: 480px;
+    padding: 28px 24px 40px;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
+  }
+  .overlay.open .sheet {
+    transform: translateY(0);
+  }
+  .sheet-handle {
+    width: 40px; height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    margin: 0 auto 24px;
+  }
+  .sheet-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+
+  /* Form */
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-input::placeholder { color: var(--muted); font-size: 14px; }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
+  }
+
+  .btn-save {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-save:active { transform: scale(0.98); background: #5a52d5; }
+  .btn-cancel {
+    width: 100%;
+    background: var(--surface2);
+    color: var(--muted);
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.15s;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 110px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1e1e2e;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 12px 24px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 100;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div>
+      <div class="header-title">Catatan<span>Ku</span></div>
+      <div class="header-sub">Simpan data dengan mudah</div>
+    </div>
+    <div class="header-right">
+      <button class="btn-reset" onclick="openResetConfirm()" id="btnReset" style="display:none">🔄 Reset</button>
+      <div class="count-badge" id="countBadge">0</div>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <div class="search-icon">🔍</div>
+      <input type="text" id="searchInput" placeholder="Cari nama atau NIK..." oninput="renderList()">
+    </div>
+  </div>
+
+  <div class="list" id="listContainer"></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openModal()">
+  ＋ Tambah Catatan
+</button>
+
+<!-- Modal Sheet -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="sheetTitle">Catatan Baru</div>
+
+    <div class="form-group">
+      <label class="form-label">NIK</label>
+      <input class="form-input" id="inputNIK" type="tel" maxlength="16" placeholder="16 digit NIK" inputmode="numeric">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nama Lengkap</label>
+      <input class="form-input" id="inputNama" type="text" placeholder="Masukkan nama lengkap">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nomor Telepon</label>
+      <input class="form-input" id="inputTelp" type="tel" placeholder="08xxxxxxxxxx" inputmode="numeric">
+    </div>
+
+    <button class="btn-save" onclick="saveEntry()">💾 Simpan</button>
+    <button class="btn-cancel" onclick="closeModal()">Batal</button>
+  </div>
+</div>
+
+<!-- Reset Confirm Dialog -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <span class="confirm-icon">⚠️</span>
+    <div class="confirm-title">Reset Semua Data?</div>
+    <div class="confirm-desc">
+      Tindakan ini akan menghapus <strong>semua catatan</strong> secara permanen dan tidak bisa dikembalikan.
+    </div>
+    <div class="confirm-actions">
+      <button class="btn-confirm-reset" onclick="doReset()">🗑️ Ya, Hapus Semua</button>
+      <button class="btn-confirm-cancel" onclick="closeResetConfirm()">Batal, Simpan Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+let data = JSON.parse(localStorage.getItem('catatanku') || '[]');
+let editIndex = null;
+
+function initials(name) {
+  return name.split(' ').slice(0,2).map(w => w[0]?.toUpperCase() || '').join('') || '?';
+}
+
+function formatNIK(nik) {
+  return nik.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+}
+
+function renderList() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const container = document.getElementById('listContainer');
+  const filtered = data.filter(d => 
+    d.nama.toLowerCase().includes(q) || d.nik.includes(q)
+  );
+
+  document.getElementById('countBadge').textContent = data.length;
+  document.getElementById('btnReset').style.display = data.length > 0 ? 'flex' : 'none';
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="emoji">${q ? '🔎' : '📋'}</div>
+      <p>${q ? 'Data tidak ditemukan' : 'Belum ada catatan.<br>Tap tombol di bawah!'}</p>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map((d, i) => {
+    const realIdx = data.indexOf(d);
+    return `<div class="card" onclick="">
+      <div class="card-header">
+        <div class="avatar">${initials(d.nama)}</div>
+        <div class="card-actions">
+          <button class="btn-icon" onclick="editEntry(${realIdx})" title="Edit">✏️</button>
+          <button class="btn-icon delete" onclick="deleteEntry(${realIdx})" title="Hapus">🗑️</button>
+        </div>
+      </div>
+      <div class="card-name">${d.nama}</div>
+      <div class="card-meta">
+        <div class="meta-item">🪪 <span>${formatNIK(d.nik)}</span></div>
+        <div class="meta-item">📞 <span>${d.telp}</span></div>
+        ${d.date ? `<div class="meta-item">🕒 <span>${d.date}</span></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openModal(isEdit = false) {
+  document.getElementById('sheetTitle').textContent = isEdit ? 'Edit Catatan' : 'Catatan Baru';
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.getElementById('inputNIK').focus(), 350);
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  editIndex = null;
+  document.getElementById('inputNIK').value = '';
+  document.getElementById('inputNama').value = '';
+  document.getElementById('inputTelp').value = '';
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+function saveEntry() {
+  const nik = document.getElementById('inputNIK').value.trim();
+  const nama = document.getElementById('inputNama').value.trim();
+  const telp = document.getElementById('inputTelp').value.trim();
+
+  if (!nik || !nama || !telp) {
+    showToast('⚠️ Semua field wajib diisi!'); return;
+  }
+  if (nik.length < 16) {
+    showToast('⚠️ NIK harus 16 digit!'); return;
+  }
+
+  const entry = {
+    nik, nama, telp,
+    date: new Date().toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
+  };
+
+  if (editIndex !== null) {
+    data[editIndex] = entry;
+    showToast('✅ Catatan diperbarui!');
+  } else {
+    data.unshift(entry);
+    showToast('✅ Catatan disimpan!');
+  }
+
+  localStorage.setItem('catatanku', JSON.stringify(data));
+  closeModal();
+  renderList();
+}
+
+function editEntry(idx) {
+  editIndex = idx;
+  const d = data[idx];
+  document.getElementById('inputNIK').value = d.nik;
+  document.getElementById('inputNama').value = d.nama;
+  document.getElementById('inputTelp').value = d.telp;
+  openModal(true);
+}
+
+function deleteEntry(idx) {
+  if (confirm(`Hapus catatan "${data[idx].nama}"?`)) {
+    data.splice(idx, 1);
+    localStorage.setItem('catatanku', JSON.stringify(data));
+    renderList();
+    showToast('🗑️ Catatan dihapus!');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function openResetConfirm() {
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+function closeResetConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('open');
+}
+
+function doReset() {
+  data = [];
+  localStorage.removeItem('catatanku');
+  closeResetConfirm();
+  renderList();
+  showToast('🧹 Semua catatan telah dihapus!');
+}
+
+// Only numbers for NIK
+document.getElementById('inputNIK').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g,'').slice(0,16);
+});
+document.getElementById('inputTelp').addEventListener('input', function() {
+  this.value = this.value.replace(/[^\d+]/g,'');
+});
+
+renderList();
+</script>
+</body>
+</html>
